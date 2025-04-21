@@ -3,28 +3,10 @@ use std::error::Error;
 use std::fs::File;
 use csv::ReaderBuilder;
 use chrono::NaiveDate; // Helps with converting time (string) to the correct format
-
-#[derive(Debug, Deserialize)]
-struct Transaction {
-    #[serde(deserialize_with = "parse_date")]
-    date: NaiveDate,
-    domain: String,
-    location: String,
-    value: u64,
-    transaction_count: u32,
-}
-
-// Function to parse the date (CUSTOM)
-fn parse_date<'de, D>(deserializer: D) -> Result<NaiveDate, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-    NaiveDate::parse_from_str(&s, "%m/%d/%Y").map_err(serde::de::Error::custom)
-}
+use crate::models::Transaction;
 
 // Function to load and read the csv file
-fn load_csv_file(url: &str) -> Result<Vec<Transaction>, Box<dyn Error>>{
+pub fn load_csv_file(url: &str) -> Result<Vec<Transaction>, Box<dyn Error>>{
     let file = File::open(url)?; // Will return Err if file can’t open
     let mut reader = ReaderBuilder::new()
         .has_headers(true) // Skip first row
