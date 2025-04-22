@@ -1,8 +1,6 @@
-use serde::Deserialize; // Helps to convert columns into struct
 use std::error::Error;
 use std::fs::File;
 use csv::ReaderBuilder;
-use chrono::NaiveDate; // Helps with converting time (string) to the correct format
 use crate::models::Transaction;
 
 // Function to load and read the csv file

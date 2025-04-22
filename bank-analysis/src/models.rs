@@ -12,6 +12,7 @@ pub enum TransactionType {
     Transfer,
 }
 
+#[derive(Debug)]
 pub struct RegionStats {
     pub region: String,
     pub total: u64,

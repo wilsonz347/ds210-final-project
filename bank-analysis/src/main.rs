@@ -11,6 +11,15 @@ mod parser;
 mod analysis;
 mod models;
 
+use crate::parser::load_csv_file;
+use crate::analysis::compute_region_stats;
+
 fn main() {
-    println!("Hello World");
+    let transactions = load_csv_file("../data/bankdataset.csv").expect("Failed to load");
+
+    let region_stats = compute_region_stats(&transactions);
+
+    for stat in region_stats {
+        println!("{:?}", stat);
+    }
 }

@@ -16,3 +16,14 @@ Testing:
 - Aggregation by date
 - Breakdown by transaction type
 */
+
+use crate::models::{Transaction, RegionStats};
+
+pub fn compute_region_stats(transactions: &[Transaction]) -> Vec<RegionStats> {
+    // Print first 10 rows for inspection
+    for (i, tx) in transactions.iter().take(10).enumerate() {
+        println!("Row {}: {:?}", i + 1, tx);
+    }
+
+    Vec::new()
+}
