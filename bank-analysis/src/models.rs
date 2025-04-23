@@ -1,12 +1,6 @@
 use chrono::NaiveDate;
 use serde::Deserialize;
 
-pub enum TransactionType {
-    Deposit,
-    Withdrawal,
-    Transfer,
-}
-
 #[derive(Debug)]
 pub struct RegionStats {
     pub region: String,
@@ -23,7 +17,7 @@ pub struct DayStats {
     pub transaction_count: u32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Transaction {
     #[serde(deserialize_with = "parse_date")]
     pub date: NaiveDate,
