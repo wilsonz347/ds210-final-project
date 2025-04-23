@@ -1,8 +1,3 @@
-/* 
-Outline:
-- Any additional types (e.g., TrendSummary, OutlierInfo) used in analysis
-*/
-
 use chrono::NaiveDate;
 use serde::Deserialize;
 
@@ -19,6 +14,13 @@ pub struct RegionStats {
     pub average: f64,
     pub median: f64,
     pub count: usize,
+}
+
+#[derive(Debug)]
+pub struct DayStats {
+    pub date: NaiveDate,
+    pub value: u64,
+    pub transaction_count: u32,
 }
 
 #[derive(Debug, Deserialize)]
