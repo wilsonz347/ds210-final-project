@@ -1,18 +1,4 @@
-/*
-Outline:
-- Return data structures suitable for CLI display or export
-*/
-
-/* 
-Testing:
-- Average, median, total calculation
-- Region grouping and sorting logic
-- Outlier detection (e.g., > 99th percentile)
-- Aggregation by date
-- Breakdown by transaction type
-*/
-
-use crate::models::{Transaction, RegionStats, DayStats};
+use crate::models::{Transaction, RegionStats, DomainStats, DayStats};
 use std::collections::HashMap;
 use chrono::NaiveDate;
 
@@ -38,7 +24,7 @@ pub fn compute_region_stats(transactions: &[Transaction]) -> Vec<RegionStats> {
         stats.push(RegionStats {region: location, total, average, median, count});
     }
 
-    stats.sort_by(|a, b| b.total.cmp(&a.total));
+    stats.sort_by(|a, b| a.region.cmp(&b.region));
     stats
 }
 
@@ -58,44 +44,82 @@ fn calculate_median(values: &[u64]) -> f64 {
     }
 }
 
-// Aggregate transaction values & counts by date
+// Aggregate transaction values & counts by date/domain
 pub fn aggregate_by_date(transactions: &[Transaction]) -> Vec<DayStats> {
-    let mut agg_map: HashMap<NaiveDate, (u64, u32)> = HashMap::new(); // date, (value, transaction_count)
+    let mut agg_map: HashMap<NaiveDate, (Vec<u64>, u32)> = HashMap::new(); // date, (values, transaction_count)
 
     for tx in transactions {
-        let entry = agg_map.entry(tx.date).or_insert((0, 0)); // If date exists in hashmap, return a mut ref to the tuple (value, transaction_count)
-        entry.0 += tx.value; 
+        let entry = agg_map.entry(tx.date).or_insert((Vec::new(), 0));
+        entry.0.push(tx.value); // Store individual values
         entry.1 += tx.transaction_count;
     }
 
-    let mut result = Vec::new(); // Reformatting for output
-    for (date, (value, transaction_count)) in agg_map {
+    let mut result = Vec::new();
+    for (date, (values, transaction_count)) in agg_map {
+        let total: u64 = values.iter().sum();
+        let count = values.len();
+        let average = if count > 0 { total as f64 / count as f64 } else { 0.0 };
+        let median = calculate_median(&values);
+
         result.push(DayStats {
             date,
-            value,
+            value: total, // Sum of values
             transaction_count,
+            average,
+            median,
+            count,
         });
     }
 
+    result.sort_by(|a, b| a.date.cmp(&b.date));
     result
 }
 
-fn percentile(mut values: Vec<u64>, p: f64) -> f64 {
-    values.sort_by(|a, b| a.partial_cmp(b).unwrap());
+pub fn aggregate_by_domain(transactions: &[Transaction]) -> Vec<DomainStats> {
+    let mut agg_map: HashMap<String, (Vec<u64>, u32)> = HashMap::new(); // domain, (values, transaction_count)
 
-    let position = (p * (values.len() - 1) as f64).round() as usize; // Convert to usize for indexing, no interpolation
+    for tx in transactions {
+        let entry = agg_map.entry(tx.domain.clone()).or_insert((Vec::new(), 0));
+        entry.0.push(tx.value); // Store individual values
+        entry.1 += tx.transaction_count;
+    }
 
-    values[position] as f64
+    let mut new_vec = Vec::new();
+    for (domain, (values, transaction_count)) in agg_map {
+        let total: u64 = values.iter().sum();
+        let count = values.len();
+        let average = if count > 0 { total as f64 / count as f64 } else { 0.0 };
+        let median = calculate_median(&values);
+
+        new_vec.push(DomainStats {
+            domain,
+            value: total, // Sum of values
+            transaction_count,
+            average,
+            median,
+            count,
+        });
+    }
+
+    new_vec.sort_by(|a, b| a.domain.cmp(&b.domain));
+    new_vec
+}
+
+fn percentile(values: Vec<u64>, p: f64) -> f64 {
+    let mut sorted = values;
+    sorted.sort_unstable(); // Sort in-place
+
+    let position = (p * (sorted.len() - 1) as f64).round() as usize;
+    sorted[position] as f64
 }
 
 // Detect anomaly - return the vector rows of the anomaly (for value & transaction count)
 pub fn detect_anomaly_for_value(transactions: &[Transaction]) -> Vec<Transaction> {
-    let mut values: Vec<u64> = transactions.iter().map(|tx| tx.value).collect(); // [365554, 584958, 885720, ...]
-    values.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let values: Vec<u64> = transactions.iter().map(|tx| tx.value).collect(); // [365554, 584958, 885720, ...]
 
     // IQR (Q3 - Q1)
-    let q1 = percentile(values.clone(), 25.0); 
-    let q3 = percentile(values.clone(), 75.0);
+    let q3 = percentile(values.clone(), 0.75);
+    let q1 = percentile(values, 0.25);
     let iqr = q3 - q1;
 
     // Find the lower & upper bound
@@ -108,11 +132,10 @@ pub fn detect_anomaly_for_value(transactions: &[Transaction]) -> Vec<Transaction
 }
 
 pub fn detect_anomaly_for_transaction_count(transactions: &[Transaction]) -> Vec<Transaction> {
-    let mut transaction_counts: Vec<u64> = transactions.iter().map(|tx| tx.transaction_count as u64).collect();
-    transaction_counts.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let transaction_counts: Vec<u64> = transactions.iter().map(|tx| tx.transaction_count as u64).collect();
 
-    let q1 = percentile(transaction_counts.clone(), 25.0); 
-    let q3 = percentile(transaction_counts.clone(), 75.0);
+    let q3 = percentile(transaction_counts.clone(), 0.75); 
+    let q1 = percentile(transaction_counts, 0.25);
     let iqr = q3 - q1;
 
     let lower = q1 - 1.5 * iqr;
@@ -123,6 +146,7 @@ pub fn detect_anomaly_for_transaction_count(transactions: &[Transaction]) -> Vec
     outliers
 }
 
-pub fn aggregate_by_domain(transactions: &[Transaction]) -> Vec<Transaction> {
-    Vec::new() // placeholder
-}
+/* Test each functions */
+/* SUGGESTIONS
+- Create data visualizations (bar charts for region/domain || line graph for date)
+*/

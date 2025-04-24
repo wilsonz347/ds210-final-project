@@ -15,6 +15,19 @@ pub struct DayStats {
     pub date: NaiveDate,
     pub value: u64,
     pub transaction_count: u32,
+    pub average: f64,
+    pub median: f64,
+    pub count: usize,
+}
+
+#[derive(Debug)]
+pub struct DomainStats {
+    pub domain: String,
+    pub value: u64,
+    pub transaction_count: u32,
+    pub average: f64,
+    pub median: f64,
+    pub count: usize,
 }
 
 #[derive(Debug, Deserialize, Clone)]
