@@ -146,10 +146,6 @@ pub fn detect_anomaly_for_transaction_count(transactions: &[Transaction]) -> Vec
     outliers
 }
 
-/* SUGGESTIONS
-- Create data visualizations (bar charts for region/domain || line graph for date)
-*/
-
 #[test]
 // Test percentile & median function
 fn test_percentile() {

@@ -1,5 +1,6 @@
 /* 
 Outline: 
+- Use Charming rust library to create data visualization: https://github.com/yuankunzhang/charming
 - Parse CLI arguments (optional: use clap or std::env)
 - Call functions from parser.rs and analysis.rs
 - Display top results in the terminal (e.g., top regions)
