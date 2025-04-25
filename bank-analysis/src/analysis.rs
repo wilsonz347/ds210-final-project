@@ -146,7 +146,25 @@ pub fn detect_anomaly_for_transaction_count(transactions: &[Transaction]) -> Vec
     outliers
 }
 
-/* Test each functions */
 /* SUGGESTIONS
 - Create data visualizations (bar charts for region/domain || line graph for date)
 */
+
+#[test]
+// Test percentile & median function
+fn test_percentile() {
+    let values = vec![12, 7, 22, 15, 9, 30, 18, 5, 14, 10];
+    let target_num = 9.0; // 25th percentile (rounded)
+    let func_num = percentile(values, 0.25);
+
+    assert_eq!(target_num, func_num);
+}
+
+#[test]
+fn test_median() {
+    let values = vec![12, 7, 22, 15, 9, 30, 18, 5, 14, 10];
+    let target_median = 13.0; 
+    let func_num = calculate_median(&values);
+
+    assert_eq!(target_median, func_num);
+}
