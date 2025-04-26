@@ -44,7 +44,7 @@ cargo run
 ```
 
 - This will generate an output file: stats.html
-- Open region_stats.html in any browser to view your charts.
+- Open stats.html in any browser to view your charts.
 
 ---
 🧪 Testing
