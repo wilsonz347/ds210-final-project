@@ -1,6 +1,6 @@
-use crate::models::{Transaction, RegionStats, DomainStats, DayStats};
+use crate::models::{Transaction, RegionStats, MonthStats};
 use std::collections::HashMap;
-use chrono::NaiveDate;
+use chrono::Datelike;
 
 // Compute statistics (total, count, avg, median) of all transactions
 pub fn compute_region_stats(transactions: &[Transaction]) -> Vec<RegionStats> {
@@ -44,26 +44,27 @@ fn calculate_median(values: &[u64]) -> f64 {
     }
 }
 
-// Aggregate transaction values & counts by date/domain
-pub fn aggregate_by_date(transactions: &[Transaction]) -> Vec<DayStats> {
-    let mut agg_map: HashMap<NaiveDate, (Vec<u64>, u32)> = HashMap::new(); // date, (values, transaction_count)
+// Aggregate transaction values & counts by month
+pub fn aggregate_by_month(transactions: &[Transaction]) -> Vec<MonthStats> {
+    let mut agg_map: HashMap<u32, (Vec<u64>, u32)> = HashMap::new(); // month -> (values, transaction_count)
 
     for tx in transactions {
-        let entry = agg_map.entry(tx.date).or_insert((Vec::new(), 0));
-        entry.0.push(tx.value); // Store individual values
+        let month = tx.date.month();
+        let entry = agg_map.entry(month).or_insert((Vec::new(), 0));
+        entry.0.push(tx.value);
         entry.1 += tx.transaction_count;
     }
 
     let mut result = Vec::new();
-    for (date, (values, transaction_count)) in agg_map {
+    for (month, (values, transaction_count)) in agg_map {
         let total: u64 = values.iter().sum();
         let count = values.len();
         let average = if count > 0 { total as f64 / count as f64 } else { 0.0 };
         let median = calculate_median(&values);
 
-        result.push(DayStats {
-            date,
-            value: total, // Sum of values
+        result.push(MonthStats {
+            month,
+            value: total,
             transaction_count,
             average,
             median,
@@ -71,38 +72,8 @@ pub fn aggregate_by_date(transactions: &[Transaction]) -> Vec<DayStats> {
         });
     }
 
-    result.sort_by(|a, b| a.date.cmp(&b.date));
+    result.sort_by_key(|m| m.month);
     result
-}
-
-pub fn aggregate_by_domain(transactions: &[Transaction]) -> Vec<DomainStats> {
-    let mut agg_map: HashMap<String, (Vec<u64>, u32)> = HashMap::new(); // domain, (values, transaction_count)
-
-    for tx in transactions {
-        let entry = agg_map.entry(tx.domain.clone()).or_insert((Vec::new(), 0));
-        entry.0.push(tx.value); // Store individual values
-        entry.1 += tx.transaction_count;
-    }
-
-    let mut new_vec = Vec::new();
-    for (domain, (values, transaction_count)) in agg_map {
-        let total: u64 = values.iter().sum();
-        let count = values.len();
-        let average = if count > 0 { total as f64 / count as f64 } else { 0.0 };
-        let median = calculate_median(&values);
-
-        new_vec.push(DomainStats {
-            domain,
-            value: total, // Sum of values
-            transaction_count,
-            average,
-            median,
-            count,
-        });
-    }
-
-    new_vec.sort_by(|a, b| a.domain.cmp(&b.domain));
-    new_vec
 }
 
 fn percentile(values: Vec<u64>, p: f64) -> f64 {

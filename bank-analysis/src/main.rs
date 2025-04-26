@@ -4,17 +4,129 @@ mod models;
 
 // Charming for visualization
 use charming::{
-    component::{Axis, Feature, Grid, Title},
-    datatype::{CompositeValue, Dataset, NumericValue},
+    component::{Axis, Title},
+    datatype::{CompositeValue, NumericValue},
     element::{AxisLabel, AxisType, NameLocation, Tooltip, ItemStyle},
-    series::Scatter,
+    series::{Scatter, Line},
     Chart, HtmlRenderer,
 };
 use std::fs::write;
 
 use crate::parser::load_csv_file;
-use crate::analysis::{compute_region_stats, aggregate_by_date, aggregate_by_domain};
-use crate::models::RegionStats;
+use crate::analysis::{compute_region_stats, aggregate_by_month};
+use crate::models::{RegionStats, MonthStats};
+
+fn create_time_series_graph(month_stats: Vec<MonthStats>) -> Vec<Chart> {
+    let data: Vec<Vec<CompositeValue>> = month_stats
+        .into_iter()
+        .map(|stat| {
+            vec![
+                CompositeValue::Number(charming::datatype::NumericValue::Float(stat.month as f64)),
+                CompositeValue::Number(charming::datatype::NumericValue::Float(stat.value as f64)),
+                CompositeValue::Number(charming::datatype::NumericValue::Float(stat.transaction_count as f64)),    
+                CompositeValue::Number(charming::datatype::NumericValue::Float(stat.average)),
+                CompositeValue::Number(charming::datatype::NumericValue::Float(stat.median)),
+                CompositeValue::Number(charming::datatype::NumericValue::Float(stat.count as f64)),
+            ]
+        })
+        .collect();
+
+    let mut charts = Vec::new();
+
+    // Chart 1: Transaction value
+    charts.push(
+        Chart::new()
+            .title(Title::new().text("Transaction Value by Date (2022)").left("center"))
+            .tooltip(Tooltip::new())
+            .x_axis(
+                Axis::new()
+                    .type_(AxisType::Value) 
+                    .name("Month")
+                    .data(
+                        data.iter()
+                            .map(|row| match &row[0] {
+                                CompositeValue::Number(n) => match n {
+                                    NumericValue::Float(f) => format!("{}", *f as i32),
+                                    &NumericValue::Integer(_) => todo!(),
+                                },
+                                _ => panic!("Expected number for month"),
+                            })
+                            .collect::<Vec<_>>(),
+                    )
+                    .axis_label(AxisLabel::new().rotate(0).interval(0))
+            )
+            .y_axis(
+                Axis::new()
+                    .type_(AxisType::Value)
+                    .name("Transaction Value")
+                    .name_location(NameLocation::Middle)
+                    .name_gap(105)
+                    .min(55_000_000_000.0)
+                    .max(66_000_000_000.0)
+            )
+            .series(
+                Line::new()
+                    .data(
+                        data.iter()
+                            .map(|row| {
+                                CompositeValue::Array(vec![
+                                    row[0].clone(),  // x: month
+                                    row[1].clone(),  // y: transaction value
+                                ])
+                            })
+                            .collect::<Vec<_>>()
+                    )
+            ),
+    );
+
+    // Chart 2: Transaction count
+    charts.push(
+        Chart::new()
+            .title(Title::new().text("Total Number of Transactions by Date (2022)").left("center"))
+            .tooltip(Tooltip::new())
+            .x_axis(
+                Axis::new()
+                    .type_(AxisType::Value) 
+                    .name("Month")
+                    .data(
+                        data.iter()
+                            .map(|row| match &row[0] {
+                                CompositeValue::Number(n) => match n {
+                                    NumericValue::Float(f) => format!("{}", *f as i32),
+                                    &NumericValue::Integer(_) => todo!(),
+                                },
+                                _ => panic!("Expected number for month"),
+                            })
+                            .collect::<Vec<_>>(),
+                    )
+                    .axis_label(AxisLabel::new().rotate(0).interval(0))
+            )
+            .y_axis(
+                Axis::new()
+                    .type_(AxisType::Value)
+                    .name("Number of Transactions")
+                    .name_location(NameLocation::Middle)
+                    .name_gap(100)
+                    .min(110_000_000.0)
+                    .max(130_000_000.0)                    
+            )
+            .series(
+                Line::new()
+                    .data(
+                        data.iter()
+                            .map(|row| {
+                                CompositeValue::Array(vec![
+                                    row[0].clone(),  // x: month
+                                    row[2].clone(),  // y: transaction count
+                                ])
+                            })
+                            .collect::<Vec<_>>()
+                    )
+            ),
+    );
+
+    charts
+}
 
 fn create_charts(region_stats: Vec<RegionStats>) -> Vec<Chart> {
     // Prepare data for the dataset
@@ -57,7 +169,9 @@ fn create_charts(region_stats: Vec<RegionStats>) -> Vec<Chart> {
                     .type_(AxisType::Value)
                     .name("Total Transaction Value")
                     .name_location(NameLocation::Middle)
-                    .name_gap(100),
+                    .name_gap(100)
+                    .min(15_000_000_000.0)
+                    .max(18_000_000_000.0)
             )
             .series(
                 Scatter::new()
@@ -95,7 +209,9 @@ fn create_charts(region_stats: Vec<RegionStats>) -> Vec<Chart> {
                     .type_(AxisType::Value)
                     .name("Average Transaction Value")
                     .name_location(NameLocation::Middle)
-                    .name_gap(70),
+                    .name_gap(70)
+                    .min(700_000.0)
+                    .max(800_000.0)
             )
             .series(
                 Scatter::new()
@@ -133,7 +249,9 @@ fn create_charts(region_stats: Vec<RegionStats>) -> Vec<Chart> {
                     .type_(AxisType::Value)
                     .name("Median Transaction Value")
                     .name_location(NameLocation::Middle)
-                    .name_gap(70),
+                    .name_gap(70)
+                    .min(700_000.0)
+                    .max(800_000.0)
             )
             .series(
                 Scatter::new()
@@ -171,7 +289,9 @@ fn create_charts(region_stats: Vec<RegionStats>) -> Vec<Chart> {
                     .type_(AxisType::Value)
                     .name("Total Transactions")
                     .name_location(NameLocation::Middle)
-                    .name_gap(60),
+                    .name_gap(60)
+                    .min(20_000.0)
+                    .max(25_000.0)
             )
             .series(
                 Scatter::new()
@@ -193,17 +313,20 @@ fn main() {
 
     let region_stats = compute_region_stats(&transactions);
 
-    for stat in &region_stats {
-        println!("{:?}", stat);
-    }
+    let month_stats = aggregate_by_month(&transactions);
 
-    // Create 4 subplots for region statistics
+    // Create line graph for date statistics
+    let time_charts = create_time_series_graph(month_stats);
+
+    // Create scatter plot for region statistics
     let charts = create_charts(region_stats);
+
+    let all_charts: Vec<Chart> = [charts, time_charts].into_iter().flatten().collect();
 
     // Render each chart and combine HTML outputs
     let renderer = HtmlRenderer::new("Region Statistics", 1200, 800);
     let mut html_output = String::new();
-    for (i, chart) in charts.iter().enumerate() {
+    for (i, chart) in all_charts.iter().enumerate() {
         let chart_id = format!("chart{}", i + 1);
         let html = renderer
             .render(chart)

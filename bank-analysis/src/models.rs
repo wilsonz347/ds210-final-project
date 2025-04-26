@@ -11,18 +11,8 @@ pub struct RegionStats {
 }
 
 #[derive(Debug)]
-pub struct DayStats {
-    pub date: NaiveDate,
-    pub value: u64,
-    pub transaction_count: u32,
-    pub average: f64,
-    pub median: f64,
-    pub count: usize,
-}
-
-#[derive(Debug)]
-pub struct DomainStats {
-    pub domain: String,
+pub struct MonthStats {
+    pub month: u32,        
     pub value: u64,
     pub transaction_count: u32,
     pub average: f64,
