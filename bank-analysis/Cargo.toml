@@ -7,3 +7,4 @@ edition = "2024"
 csv = "1.3"
 serde = { version = "1.0", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
+charming = "0.4.0"
