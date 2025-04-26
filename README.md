@@ -1,5 +1,6 @@
 # ds210-final-project
 📈 Bank Transaction Analysis with Rust & Charming
+
 This project explores a large-scale bank transactions dataset (over 1 million rows) to extract trends, detect anomalies, and visualize financial behaviors by month and region. It uses Rust and the charming library for graph generation, with modularized architecture and automated unit tests to ensure code quality.
 
 ---
