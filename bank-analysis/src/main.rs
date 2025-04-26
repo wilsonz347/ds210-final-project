@@ -373,5 +373,5 @@ fn main() {
     );
 
     // Write to file
-    write("region_stats.html", final_html).expect("Failed to write HTML file");
+    write("stats.html", final_html).expect("Failed to write HTML file");
 }
