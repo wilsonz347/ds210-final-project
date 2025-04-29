@@ -346,7 +346,7 @@ fn main() {
         html_output.push_str("<div style='margin-bottom: 50px;'></div>");
     }
 
-    // Wrap in a single HTML structure (FYI: Large majority of Charming content is AI-generated)
+    // Wrap in a single HTML structure (The html content below is AI-generated)
     let final_html = format!(
         r#"
         <!DOCTYPE html>
