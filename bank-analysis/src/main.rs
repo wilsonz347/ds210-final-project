@@ -13,7 +13,7 @@ use charming::{
 use std::fs::write;
 
 use crate::parser::load_csv_file;
-use crate::analysis::{compute_region_stats, aggregate_by_month};
+use crate::analysis::{compute_region_stats, aggregate_by_month, detect_anomaly_for_value, detect_anomaly_for_transaction_count};
 use crate::models::{RegionStats, MonthStats};
 
 fn create_time_series_graph(month_stats: Vec<MonthStats>) -> Vec<Chart> {
@@ -346,7 +346,7 @@ fn main() {
         html_output.push_str("<div style='margin-bottom: 50px;'></div>");
     }
 
-    // Wrap in a single HTML structure
+    // Wrap in a single HTML structure (FYI: Large majority of Charming content is AI-generated)
     let final_html = format!(
         r#"
         <!DOCTYPE html>
@@ -374,4 +374,25 @@ fn main() {
 
     // Write to file
     write("stats.html", final_html).expect("Failed to write HTML file");
+
+    // Anomaly detection output
+    // Find the rows that are considered outliers
+    // Loop over the rows and print every fields
+    let value_anomalies = detect_anomaly_for_value(&transactions);
+    println!("Anomalies by Transaction Value ({} found):", value_anomalies.len());
+    for anomaly in &value_anomalies {
+        println!(
+            "Date: {}, Location: {}, Domain: {}, Value: {}",
+            anomaly.date, anomaly.location, anomaly.domain, anomaly.value
+        );
+    }
+
+    let count_anomalies = detect_anomaly_for_transaction_count(&transactions);
+    println!("\nAnomalies by Transaction Count ({} found):", count_anomalies.len());
+    for anomaly in &count_anomalies {
+        println!(
+            "Date: {}, Location: {}, Domain: {}, Count: {}",
+            anomaly.date, anomaly.location, anomaly.domain, anomaly.transaction_count
+        );
+    }
 }

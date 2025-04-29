@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use chrono::Datelike;
 
 // Compute statistics (total, count, avg, median) of all transactions
+// Loops over the transactions struct and push them into the hashmap for analysis
 pub fn compute_region_stats(transactions: &[Transaction]) -> Vec<RegionStats> {
     let mut map: HashMap<String, Vec<u64>> = HashMap::new(); // Hashmap <Region, [total, avg, med, count]
 
@@ -28,7 +29,7 @@ pub fn compute_region_stats(transactions: &[Transaction]) -> Vec<RegionStats> {
     stats
 }
 
-// Calculate median
+// Calculate median (for the aggregation functions)
 fn calculate_median(values: &[u64]) -> f64 {
     // Sort the values
     let mut sorted = values.to_vec();
@@ -45,6 +46,8 @@ fn calculate_median(values: &[u64]) -> f64 {
 }
 
 // Aggregate transaction values & counts by month
+// Loops over the transactions struct and push them into the hashmap for analysis
+// Use mathematical computations to determine average, median, etc
 pub fn aggregate_by_month(transactions: &[Transaction]) -> Vec<MonthStats> {
     let mut agg_map: HashMap<u32, (Vec<u64>, u32)> = HashMap::new(); // month -> (values, transaction_count)
 
@@ -76,6 +79,7 @@ pub fn aggregate_by_month(transactions: &[Transaction]) -> Vec<MonthStats> {
     result
 }
 
+// Custom percentile function for the detect anomaly functions
 fn percentile(values: Vec<u64>, p: f64) -> f64 {
     let mut sorted = values;
     sorted.sort_unstable(); // Sort in-place
@@ -102,6 +106,7 @@ pub fn detect_anomaly_for_value(transactions: &[Transaction]) -> Vec<Transaction
     outliers
 }
 
+// Detect anomaly for transaction count instead of value
 pub fn detect_anomaly_for_transaction_count(transactions: &[Transaction]) -> Vec<Transaction> {
     let transaction_counts: Vec<u64> = transactions.iter().map(|tx| tx.transaction_count as u64).collect();
 
